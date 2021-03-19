@@ -11,7 +11,7 @@ import (
 	nsq "github.com/nsqio/go-nsq"
 )
 
-func main() {
+func main() { // Producer
 
 	type Unit struct {
 		Date   string `json:"Date"`
@@ -35,9 +35,7 @@ func main() {
 			*nsqServer, *nsqTopic)
 	}
 
-	nsqconfig := nsq.NewConfig()
-
-	w, _ := nsq.NewProducer(*nsqServer, nsqconfig)
+	w, _ := nsq.NewProducer(*nsqServer, nsq.NewConfig())
 
 	if !*verbose {
 		w.SetLogger(nil, 0) // zero logs
