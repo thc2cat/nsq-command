@@ -20,20 +20,20 @@ Verify the web interface of nsq instance [http://YourNSQServer:4171](http://Your
 ## Build producer and consumer
 
 ```shell
-# make ( will downloads missing libs, and produce a go build )
+# make ( will do a go build )
 ```
 
 ## Test
 
 ```shell
 $ # launch consumer 
-$ ./consumer
+$ ./C.exe
 $ # launch producer
-$ ./producer -s "this host" -m "just a test"
+$ ./P.exe -s "this host" -m "just a test"
 $ # default output text has been received from consumer 
 NSQ stamp[10:47:32], from[this host], data[just a test]
 $ # you can use command mode where %s is replace with text
-$ ./consumer -c "echo %s"
+$ ./C.exe -c "echo %s"
 $ # output => just a test
 ```
 
@@ -44,13 +44,13 @@ So now, you can spread data to multiple hosts.
   * same channel mean one consumer out of many will have data
   * different channel mean each consumer will have a copy
 
-### Usage exemple
+### Exemple
 
-#### Spreading ip address to a group of hosts for firewall action
+#### Spreading ip address to group of hosts for blocking ip address
 
-* ./producer -C "fw_deny_ip" -m "192.168.99.0/24"
-* on Host1 (using ipfw) $ ./consumer -C "fw_deny_ip" -cmd "ipfw table 1 add %s"
-* on Host2 (using ipset) $ ./consumer -C "fw_deny_ip" -cmd "ipset add blacklist %s timeout 0"
+* ./P.exe -C "fw_deny_ip" -m "192.168.99.0/24"
+* on Host1 (using ipfw) $ ./C.exe -C "fw_deny_ip" -cmd "ipfw table 1 add %s"
+* on Host2 (using ipset) $ ./C.exe -C "fw_deny_ip" -cmd "ipset add blacklist %s timeout 0"
 
 #### Additional tips
 
