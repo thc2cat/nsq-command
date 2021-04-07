@@ -1,8 +1,11 @@
 
 all: producer consumer
 
-producer: P/*.go
-	go build P/producer.go 
+producer: Producer/*.go
+	go build Producer/producer.go 
 
-consumer: C/*.go
-	go build C/consumer.go 
+consumer: Consumer/*.go
+	go build Consumer/consumer.go 
+
+clean:
+	rm Consumer/Consumer.exe Producer/Producer.exe consumer producer 2>/dev/null

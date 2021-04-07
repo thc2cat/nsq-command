@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -16,16 +17,17 @@ func main() { // Producer
 	type Unit struct {
 		Date   string `json:"Date"`
 		Sender string `json:"Sender"`
-		Text   string `json:"Text"`
+		Msg    string `json:"Msg"`
 	}
 
 	Hostname, _ := os.Hostname() // Get Short hostname
 
-	sender := flag.String("sender", Hostname, "sender")
-	texte := flag.String("text", "", "text to send")
+	sender := flag.String("s", Hostname, "sender")
+	msg := flag.String("m", "", "message")
+	msgFromFile := flag.String("M", "", "read message from file")
 
-	nsqServer := flag.String("server", "193.51.24.101:4150", "nsq server")
-	nsqTopic := flag.String("topic", "default", "nsq topic")
+	nsqServer := flag.String("S", getenv("NSQ_SERVER", "localhost:4150"), "nsq server")
+	nsqTopic := flag.String("T", "default", "nsq topic")
 	verbose := flag.Bool("v", false, "verbose")
 
 	flag.Parse()
@@ -41,7 +43,15 @@ func main() { // Producer
 		w.SetLogger(nil, 0) // zero logs
 	}
 
-	unit := &Unit{Sender: *sender, Date: time.Now().Format("15:04:05"), Text: *texte}
+	if *msgFromFile != "" {
+		content, err := ioutil.ReadFile(*msgFromFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		*msg = (string)(content)
+	}
+
+	unit := &Unit{Sender: *sender, Date: time.Now().Format("15:04:05"), Msg: *msg}
 
 	j, err := json.Marshal(unit)
 	if err != nil {
@@ -58,4 +68,12 @@ func main() { // Producer
 
 	w.Stop()
 
+}
+
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
 }

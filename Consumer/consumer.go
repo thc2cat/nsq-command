@@ -16,29 +16,32 @@ import (
 	nsq "github.com/nsqio/go-nsq"
 )
 
+// TODO - Add the write file with "sendervalue" as filename to consumer
+
 func main() { // Consumer
 
-	type Unit struct {
+	type Unit struct { // Unit type data used in our messages
 		Date   string `json:"Date"`
 		Sender string `json:"Sender"`
-		Text   string `json:"Text"`
+		Msg    string `json:"Msg"`
 	}
 
 	var u Unit
 
 	Hostname, _ := os.Hostname() // Get Short hostname
 
-	nsqServer := flag.String("server", "193.51.24.101:4150", "nsq server")
-	nsqTopic := flag.String("topic", "default", "nsq topic")
-	nsqChannel := flag.String("channel", Hostname, "nsq channel")
+	// Set NSQ_SERVER with -S or NSQ_SERVER env
+	nsqServer := flag.String("S", getenv("NSQ_SERVER", "localhost:4150"), "nsq server")
+	nsqTopic := flag.String("T", "default", "nsq topic")
+	nsqChannel := flag.String("C", Hostname, "nsq channel")
 
-	cmd := flag.String("cmd", "", "command to exec")
+	cmd := flag.String("c", "", "command to exec")
 	verbose := flag.Bool("v", false, "verbose")
 
 	flag.Parse()
 
 	if *verbose {
-		fmt.Printf("NSQ Consumer configured with Server[%s](Topic:%s/Channel:%s)\n",
+		fmt.Printf("NSQ Consumer config Server[%s](Topic:%s/Channel:%s)\n",
 			*nsqServer, *nsqTopic, *nsqChannel)
 	}
 
@@ -54,10 +57,10 @@ func main() { // Consumer
 	q.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
 		err := json.Unmarshal(message.Body, &u)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("json.Unmarshal error :", err)
 		}
 
-		nsqAction(*cmd, u.Date, u.Sender, u.Text, *verbose)
+		nsqAction(*cmd, u.Date, u.Sender, u.Msg, *verbose)
 
 		return nil
 	}))
@@ -68,13 +71,13 @@ func main() { // Consumer
 	wg.Wait() // for ever
 }
 
-func nsqAction(action, date, sender, text string, verbose bool) {
+func nsqAction(action, date, sender, data string, verbose bool) {
 	switch action {
 	case "":
 		fmt.Printf("NSQ stamp[%s], from[%s], data[%s]\n",
-			date, sender, text)
+			date, sender, data)
 	default:
-		out := fmt.Sprintf(action, text)
+		out := fmt.Sprintf(action, data)
 		if verbose {
 			fmt.Printf("Will execute ->%s<-\n", out)
 		}
@@ -91,7 +94,8 @@ func tryexec(mycmd string) {
 		os.Exit(1)
 	}
 	// Create a new context and add a timeout to it
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(wait)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(wait)*time.Second)
 	defer cancel() // The cancel should be deferred so resources are cleaned up
 
 	cmdargs := strings.Split(mycmd, " ")
